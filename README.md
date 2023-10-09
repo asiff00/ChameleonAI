@@ -1,2 +1,2 @@
-# Customizable AI Chatbot with Tkinter GUI using PaLM LLM
+# Customizable AI Chatbot with GUI || PaLM || LLM || TKinter
  
