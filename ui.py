@@ -1,3 +1,4 @@
+import threading
 import tkinter as tk
 from tkinter import ttk
 from brain import ChatbotBackend
@@ -8,7 +9,6 @@ class ChatMessage:
     def __init__(self, text, is_user=False):
         self.text = text
         self.is_user = is_user
-
 
 class PlaceholderEntry(ttk.Entry):
     def __init__(self, container, placeholder, *args, **kwargs):
@@ -30,13 +30,12 @@ class PlaceholderEntry(ttk.Entry):
 class ChatbotApp:
     def __init__(self, data):
         self.name = 'Assistant'
-        self.priming = 'You are a virtual chat bot, you are here to help the user with all of their questions.'
-        self.decorator = 'Ask questions if you dont know the answer'
         self.data = data
         self.db = Database(self.data)
         self.api_key = self.db.get_api()
+        self.priming = self.db.get_priming()
+        self.decorator = self.db.get_decorator()
         self.chatbot_backend = ChatbotBackend(self.api_key)
-        
         self.root = tk.Tk()
         self.root.title(self.name)
         self.create_ui()
@@ -106,11 +105,15 @@ class ChatbotApp:
         if user_message:
             self.user_input.delete(0, tk.END)
             self.display_message(f'You: {user_message}', is_user=True)
+            bot_message_thread = threading.Thread(target=self.bot_message, args=(user_message,))
+            bot_message_thread.start()
+
+    def bot_message(self, user_message):
             bot_response = self.chatbot_backend.generate_text(user_message)
             self.display_message(f'Bot: {bot_response}', is_user=False)
             self.chat_history.tag_add("highlight", "end-2l", "end")
             self.chat_history.after(500, self.remove_highlight)
-
+        
     def remove_highlight(self):
         self.chat_history.tag_remove("highlight", "1.0", "end")
 
@@ -166,14 +169,14 @@ class ChatbotApp:
             api_window, text="Update", command=lambda: self.save_api_configuration(api_key_entry.get()))
         save_button.grid(row=1, column=1, padx=10, pady=10)
 
-
         
     def save_agent_configuration(self, priming_text, decorator_text):
         self.priming = priming_text
         self.decorator = decorator_text
         self.db.set_priming(self.priming)
         self.db.set_decorator(self.decorator)
-        self.reset_chat()
+        reset_thread = threading.Thread(target=self.reset_chat)
+        reset_thread.start()
         
     def save_api_configuration(self, api_key):
         self.api_key = api_key
@@ -181,15 +184,20 @@ class ChatbotApp:
         
     def reset_chat(self):
         self.chatbot_backend = ChatbotBackend(self.api_key)
+        bot_initialize_thread = threading.Thread(target=self.bot_initialize)
+        bot_initialize_thread.start()
+
+    def bot_initialize(self):
+        context = self.priming + self.decorator
+        prompt =  "You are " + context + " now tell us about you based on the information provided, in just one line, start with 'I am'"
+        bot_response = self.chatbot_backend.initialize(
+            context,prompt)
         self.chat_history.configure(state="normal")
         self.chat_history.delete("1.0", "end")
         self.chat_history.configure(state="disabled")
-        context = self.priming + self.decorator
-        bot_response = self.chatbot_backend.initialize(
-            context, "You are " + context + " now tell us about you based on the information provided, in just one line, start with 'I am'")
         self.display_message(f'Bot: {bot_response}', is_user=False)
         self.chat_history.tag_add("highlight", "end-2l", "end")
         self.chat_history.after(500, self.remove_highlight)
-
+        
     def run(self):
         self.root.mainloop()
