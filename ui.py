@@ -1,6 +1,7 @@
 import threading
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 from brain import ChatbotBackend
 from save_load import Database
 from ttkthemes import ThemedStyle
@@ -35,13 +36,23 @@ class ChatbotApp:
         self.api_key = self.db.get_api()
         self.priming = self.db.get_priming()
         self.decorator = self.db.get_decorator()
-        self.chatbot_backend = ChatbotBackend(self.api_key)
+        self.reset_chat() 
+        self.is_api_menu_open = False
+        self.is_configure_menu_open = False
+        self.api_menu_list=[]
+        self.configure_menu_list = []
         self.root = tk.Tk()
         self.root.title(self.name)
+        self.root.attributes("-topmost", True)
+        self.root.geometry("500x400")
+        self.root.resizable(width=False, height=False)
         self.create_ui()
         self.setup_styles()
-        self.reset_chat()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_root_window_closing)
 
+    def on_root_window_closing(self):
+        if messagebox.askokcancel("Closing app", "Do you really want to close the app?"):
+            self.root.destroy()
     def create_ui(self):
         self.create_menu()
         self.create_chat_frame()
@@ -70,15 +81,18 @@ class ChatbotApp:
         self.chat_history.tag_configure(
             "bot_tag", justify="left", background="#e0e0e0")
         self.chat_history.pack(fill=tk.BOTH, expand=True)
+        self.chat_history.place(relheight=.8, relwidth=1, relx=0)
 
     def create_input_frame(self):
         # Input frame
         self.input_frame = ttk.Frame(self.chat_container)
-        self.input_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
+        self.input_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         self.chat_reset_button = ttk.Button(
             self.input_frame, text="Reset", command=self.reset_chat, style="Reset.TButton")
         self.chat_reset_button.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
 
         self.user_input = ttk.Entry(
             self.input_frame, style="User.TEntry", font=("Arial", 14))
@@ -88,7 +102,7 @@ class ChatbotApp:
         self.send_button = ttk.Button(
             self.input_frame, text="Send", command=self.send_message, style="Send.TButton")
         self.send_button.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-
+        self.input_frame.place(relheight=.2, relwidth=1, rely=.8)
     def setup_styles(self):
         themed_style = ThemedStyle(self.root)
         themed_style.set_theme("adapta")
@@ -111,8 +125,7 @@ class ChatbotApp:
     def bot_message(self, user_message):
             bot_response = self.chatbot_backend.generate_text(user_message)
             self.display_message(f'Bot: {bot_response}', is_user=False)
-            self.chat_history.tag_add("highlight", "end-2l", "end")
-            self.chat_history.after(500, self.remove_highlight)
+
         
     def remove_highlight(self):
         self.chat_history.tag_remove("highlight", "1.0", "end")
@@ -130,9 +143,14 @@ class ChatbotApp:
         self.chat_history.see("end")
 
     def open_configure_menu(self):
+        if self.is_configure_menu_open:
+            return None
+ 
         configure_window = tk.Toplevel(self.root)
+        configure_window.attributes("-topmost", True)
         configure_window.title("Configure Agent")
 
+        
         priming_label = ttk.Label(configure_window, text="Goal: 'You are a banana' for example!")
         priming_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
         
@@ -144,15 +162,26 @@ class ChatbotApp:
         decorator_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
         decorator_entry = PlaceholderEntry(configure_window, self.decorator)
         decorator_entry.grid(row=3, column=0, padx=10, pady=5, sticky="w")
-
+        
+        
+    
         save_button = ttk.Button(
             configure_window, text="Save", command=lambda: self.save_agent_configuration(priming_entry.get(), decorator_entry.get()))
         save_button.grid(row=4, column=1, padx=10, pady=10)
-    
-    def open_api_menu(self):
-        api_window = tk.Toplevel(self.root)
-        api_window.title("Update API Key")
         
+        self.is_configure_menu_open = True
+        self.configure_menu_list.append(configure_window)
+        configure_window.protocol("WM_DELETE_WINDOW", self.on_configure_menu_closing)
+        configure_window.wait_window(configure_window)
+
+    def open_api_menu(self):
+        if self.is_api_menu_open:
+            return None
+
+        api_window = tk.Toplevel(self.root)
+        api_window.attributes("-topmost", True)
+        api_window.title("Update API Key")
+
         if self.api_key is None:
             default_api_value = "PUT YOUR PALM API KEY HERE"
         else:
@@ -164,23 +193,56 @@ class ChatbotApp:
         
         api_key_entry = PlaceholderEntry(api_window, api_entry_var)
         
-        api_key_entry.grid(row=0, column=1, padx=10, pady=5)        
+        api_key_entry.grid(row=0, column=1, padx=10, pady=5)
+        
+
+          
         save_button = ttk.Button(
             api_window, text="Update", command=lambda: self.save_api_configuration(api_key_entry.get()))
         save_button.grid(row=1, column=1, padx=10, pady=10)
+        
+        self.is_api_menu_open = True
+        self.api_menu_list.append(api_window)
+        api_window.protocol("WM_DELETE_WINDOW", self.on_api_menu_closing)
+        api_window.wait_window(api_window)
 
+    def on_configure_menu_closing(self):
+        print("Configure menu closing")
+        for widget in self.configure_menu_list:
+            widget.destroy()
+        self.is_configure_menu_open = False
+        self.configure_menu_list.clear()
+    
+    def on_api_menu_closing(self):
+        print("API menu closing")
+        for widget in self.api_menu_list:
+            widget.destroy()
+        self.is_api_menu_open = False
+        
+        self.api_menu_list.clear()
+        
         
     def save_agent_configuration(self, priming_text, decorator_text):
         self.priming = priming_text
         self.decorator = decorator_text
         self.db.set_priming(self.priming)
         self.db.set_decorator(self.decorator)
+        
+        for widget in self.configure_menu_list:
+            widget.destroy()
+        self.is_configure_menu_open=False
+        self.configure_menu_list.clear()
+
         reset_thread = threading.Thread(target=self.reset_chat)
         reset_thread.start()
         
     def save_api_configuration(self, api_key):
         self.api_key = api_key
         self.db.set_api(self.api_key)
+        for widget in self.api_menu_list:
+            widget.destroy()
+        self.is_api_menu_open=False
+        self.api_menu_list.clear()
         
     def reset_chat(self):
         self.chatbot_backend = ChatbotBackend(self.api_key)
@@ -196,8 +258,7 @@ class ChatbotApp:
         self.chat_history.delete("1.0", "end")
         self.chat_history.configure(state="disabled")
         self.display_message(f'Bot: {bot_response}', is_user=False)
-        self.chat_history.tag_add("highlight", "end-2l", "end")
-        self.chat_history.after(500, self.remove_highlight)
+
         
     def run(self):
         self.root.mainloop()
