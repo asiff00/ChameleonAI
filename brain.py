@@ -17,13 +17,19 @@ class ChatbotBackend:
             self.model = None
 
     def initialize(self, context, prompt, temperature=0.7):
-        if self.model is None:
-            return "NO API FOUND: Set up API first."
-        self.response = palm.chat(context=context, messages=prompt)
-        return self.response.last
+        try:
+            if self.model is None:
+                return "NO API FOUND: Set up API first."
+            self.response = palm.chat(context=context, messages=prompt)
+            return self.response.last
+        except:
+            return "Error: Check your internet connection"
 
     @retry.Retry()
     def generate_text(self, prompt, temperature=0.5):
-        if self.model is None:
-            return "NO API FOUND: Set up API first."
-        return "Sorry, could you please rephrase it?" if self.response.reply(prompt).last is None else self.response.reply(prompt).last
+        try:
+            if self.model is None:
+                return "NO API FOUND: Set up API first."
+            return "Sorry, could you please rephrase it?" if self.response.reply(prompt).last is None else self.response.reply(prompt).last
+        except:
+            return "Error: Check your internet connection"
