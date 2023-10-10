@@ -1,6 +1,5 @@
+#save_load.py
 import json
-
-
 class Database:
     def __init__(self, database):
         self.data = database
