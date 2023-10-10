@@ -116,6 +116,7 @@ celerybeat.pid
 .json
 .bin
 .venv
+.vscode
 env/
 venv/
 ENV/
