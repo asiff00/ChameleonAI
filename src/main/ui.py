@@ -36,7 +36,6 @@ class ChatbotApp:
         self.api_key = self.db.get_api()
         self.priming = self.db.get_priming()
         self.decorator = self.db.get_decorator()
-        self.reset_chat() 
         self.is_api_menu_open = False
         self.is_configure_menu_open = False
         self.api_menu_list=[]
@@ -49,6 +48,7 @@ class ChatbotApp:
         self.create_ui()
         self.setup_styles()
         self.root.protocol("WM_DELETE_WINDOW", self.on_root_window_closing)
+        self.reset_chat() 
 
     def on_root_window_closing(self):
         if messagebox.askokcancel("Closing app", "Do you really want to close the app?"):
@@ -115,6 +115,11 @@ class ChatbotApp:
             "Arial", 14), padding=(10, 5), relief=tk.RAISED)
 
     def send_message(self, event=None):
+        if len(self.api_key)<5:
+            self.open_api_menu()
+            print("API is empty")
+            return None
+        
         user_message = self.user_input.get()
         if user_message:
             self.user_input.delete(0, tk.END)
@@ -150,17 +155,19 @@ class ChatbotApp:
         configure_window.attributes("-topmost", True)
         configure_window.title("Configure Agent")
 
-        
-        priming_label = ttk.Label(configure_window, text="Goal: 'You are a banana' for example!")
+        priming = "You are an AI assistant!"
+        priming_label = ttk.Label(configure_window, text="Goal")
         priming_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
         
-        priming_entry= PlaceholderEntry(configure_window, self.priming)
+        priming_entry= PlaceholderEntry(configure_window, self.priming if len(self.priming)>2 else priming)
 
         priming_entry.grid(row=1, column=0, padx=10, pady=5, sticky="w")
 
-        decorator_label = ttk.Label(configure_window, text="Guide: 'You make everything yellow' for example!")
+        decorator_label = ttk.Label(configure_window, text="Guide")
         decorator_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
-        decorator_entry = PlaceholderEntry(configure_window, self.decorator)
+        
+        decorator = "You are here to help!"
+        decorator_entry = PlaceholderEntry(configure_window, self.decorator if len(self.decorator)>2 else decorator)
         decorator_entry.grid(row=3, column=0, padx=10, pady=5, sticky="w")
         
         
@@ -182,7 +189,7 @@ class ChatbotApp:
         api_window.attributes("-topmost", True)
         api_window.title("Update API Key")
 
-        if self.api_key is None:
+        if len(self.api_key)<5:
             default_api_value = "PUT YOUR PALM API KEY HERE"
         else:
             default_api_value = self.api_key
@@ -207,14 +214,14 @@ class ChatbotApp:
         api_window.wait_window(api_window)
 
     def on_configure_menu_closing(self):
-        print("Configure menu closing")
+
         for widget in self.configure_menu_list:
             widget.destroy()
         self.is_configure_menu_open = False
         self.configure_menu_list.clear()
     
     def on_api_menu_closing(self):
-        print("API menu closing")
+
         for widget in self.api_menu_list:
             widget.destroy()
         self.is_api_menu_open = False
@@ -244,12 +251,24 @@ class ChatbotApp:
         self.is_api_menu_open=False
         self.api_menu_list.clear()
         
+        if len(self.api_key)<10:
+            self.open_api_menu()
+            return None
+        
+        reset_thread = threading.Thread(target=self.reset_chat)
+        reset_thread.start()
+            
+        
     def reset_chat(self):
         self.chatbot_backend = ChatbotBackend(self.api_key)
         bot_initialize_thread = threading.Thread(target=self.bot_initialize)
         bot_initialize_thread.start()
 
     def bot_initialize(self):
+        if len(self.api_key)<10:
+            self.open_api_menu()
+            return None
+        
         context = self.priming + self.decorator
         prompt =  "You are " + context + " now tell us about you based on the information provided, in just one line, start with 'I am'"
         bot_response = self.chatbot_backend.initialize(

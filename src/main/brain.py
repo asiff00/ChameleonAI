@@ -23,6 +23,6 @@ class ChatbotBackend:
     @retry.Retry()
     def generate_text(self, prompt, temperature=0.7):
         try:
-            return "Sorry, could you please rephrase it?" if self.response.reply(prompt).last is None else self.response.reply(prompt).last
+            return "I'd rather not answer" if self.response.reply(prompt).last is None else self.response.reply(prompt).last
         except:
             return "Error - Invalid API or connectivity issue: Please check your API credentials or internet connection"

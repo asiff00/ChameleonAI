@@ -114,6 +114,7 @@ celerybeat.pid
 # Environments
 .env
 .json
+.bin
 .venv
 env/
 venv/
