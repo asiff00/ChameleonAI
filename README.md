@@ -1,6 +1,10 @@
 # Customizable AI Chatbot with GUI || PaLM || LLM || TKinter
+<h2>Project Structure</h2>
 
-Project Structure:
+
+  <summary>Click to expand</summary>
+  <pre>
+    <code>
 Assistant/
 ├── src/
 │   ├── main/
@@ -8,17 +12,19 @@ Assistant/
 │   │   ├── brain.py
 │   │   ├── save_load.py
 │   │   └── ui.py
+│   ├── data/
+│   │   ├── database.json
 │   ├── test/
 │   │   └── test.py
-├── data/
-│   ├── database.json
 ├── img/
 │   ├── icon.ico
 │   └── srcSplash.png
 ├── docs/
+│   ├── documentation.txt
 ├── .gitignore
 ├── LICENSE
 ├── README.md
 └── requirements.txt
-
+    </code>
+  </pre>
  
