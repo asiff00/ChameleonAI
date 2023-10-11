@@ -12,7 +12,7 @@ Assistant/
 │   │   └── test.py
 ├── img/
 │   ├── icon.ico
-│   └── srcSplash.png
+│   └── iconSplash.png
 ├── docs/
 │   ├── documentation.txt
 ├── .gitignore
