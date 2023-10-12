@@ -6,6 +6,7 @@ from brain import ChatbotBackend
 from save_load import Database
 from ttkthemes import ThemedStyle
 import time
+import webbrowser
 
 
 # Define a class to represent chat messages
@@ -46,7 +47,7 @@ class ChatbotApp:
         Args:
             data (dict): Configuration data for the chatbot.
         """
-        self.name = "FoxAI"
+        self.name = "ChameleonAI"
         self.data = data
         self.db = Database(self.data)
         self.api_key = self.db.get_api()
@@ -57,6 +58,8 @@ class ChatbotApp:
         self.api_menu_list = []
         self.configure_menu_list = []
         self.is_timeout = True
+        self.average_api_wait_time = 0
+        self.api_call_count = 0
         self.root = tk.Tk()
         self.root.title(self.name)
         self.root.attributes("-topmost", True)
@@ -95,6 +98,28 @@ class ChatbotApp:
         self.menu_bar.add_command(label="Personality", command=self.open_configure_menu)
         self.api_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_command(label="API", command=self.open_api_menu)
+
+    def open_link(self, event):
+        webbrowser.open("https://makersuite.google.com/app/apikey")
+
+    def display_average_api_wait_time(self, last_api_call_wait_time):
+        """
+        Displays the average API call wait time
+        Conflicts with API set up menu, skipping it for now
+        """
+
+        return None
+        try:
+            self.menu_bar.delete(3)
+        except:
+            pass
+
+        self.average_api_wait_time += last_api_call_wait_time
+        average = self.average_api_wait_time // self.api_call_count
+        self.average_api_wait_time_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.menu_bar.add_cascade(
+            label="Average API Wait Time: " + str(average) + " sec"
+        )
 
     def create_chat_frame(self):
         """
@@ -159,7 +184,7 @@ class ChatbotApp:
         Setup styles and themes for the application.
         """
         themed_style = ThemedStyle(self.root)
-        themed_style.set_theme("adapta")
+        themed_style.set_theme("clam")
         self.root.style = ttk.Style()
         self.root.style.configure(
             "Reset.TButton", font=("Arial", 14), padding=(10, 5), relief=tk.RAISED
@@ -212,7 +237,12 @@ class ChatbotApp:
         start_time = time.time()
         bot_response = self.chatbot_backend.generate_text(user_message)
         end_time = time.time()
-        print("API wait time: ", end_time-start_time)
+        self.api_call_count += 1
+        api_call_time_thread = threading.Thread(
+            target=self.display_average_api_wait_time, args=(end_time - start_time,)
+        )
+        api_call_time_thread.start()
+        print("API wait time: ", end_time - start_time)
         self.display_message(f"Bot: {bot_response}", is_user=False)
         self.is_timeout = False
 
@@ -264,23 +294,22 @@ class ChatbotApp:
         y = self.root.winfo_y()
         configure_window.geometry("+%d+%d" % (x + 50, y + 50))
 
-        priming = "You are an AI assistant!"
         priming_label = ttk.Label(configure_window, text="Character")
-        priming_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-
-        priming_entry = PlaceholderEntry(
-            configure_window, self.priming if len(self.priming) > 2 else priming
-        )
-        priming_entry.grid(row=1, column=0, padx=10, sticky="w")
+        priming_label.grid(row=0, column=0, padx=10, sticky="w")
+        priming = "You are an AI assistant!"
+        if len(self.priming) < 2:
+            self.priming = priming
+        priming_entry = PlaceholderEntry(configure_window, self.priming)
+        priming_entry.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
 
         decorator_label = ttk.Label(configure_window, text="Personality")
-        decorator_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
+        decorator_label.grid(row=2, column=0, padx=10, sticky="w")
 
         decorator = "You are here to help!"
-        decorator_entry = PlaceholderEntry(
-            configure_window, self.decorator if len(self.decorator) > 2 else decorator
-        )
-        decorator_entry.grid(row=3, column=0, padx=10, sticky="w")
+        if len(self.decorator) < 2:
+            self.decorator = decorator
+        decorator_entry = PlaceholderEntry(configure_window, self.decorator)
+        decorator_entry.grid(row=3, column=0, padx=10, pady=5, sticky="ew")
 
         save_button = ttk.Button(
             configure_window,
@@ -319,18 +348,29 @@ class ChatbotApp:
             default_api_value = self.api_key
         api_entry_var = default_api_value
 
-        api_key_label = ttk.Label(api_window, text="PaLM API Key:")
-        api_key_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        api_create_label = ttk.Label(api_window, text="GET API")
+        api_create_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        api_create_link = tk.Label(
+            api_window,
+            fg="blue",
+            cursor="hand2",
+            font=("arial", 12, "italic"),
+            text="https://makersuite.google.com/app/apikey",
+        )
+        api_create_link.bind("<Button-1>", self.open_link)
+        api_create_link.grid(row=0, column=1, padx=5)
 
+        api_key_label = ttk.Label(api_window, text="API KEY")
+        api_key_label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
         api_key_entry = PlaceholderEntry(api_window, api_entry_var)
-        api_key_entry.grid(row=0, column=1, padx=10, pady=5)
+        api_key_entry.grid(row=1, column=1, padx=5, sticky="ew")
 
         save_button = ttk.Button(
             api_window,
             text="Update",
             command=lambda: self.save_api_configuration(api_key_entry.get()),
         )
-        save_button.grid(row=1, column=1, padx=10, pady=10)
+        save_button.grid(row=2, column=1, padx=10, pady=10, sticky="e")
 
         self.is_api_menu_open = True
         self.api_menu_list.append(api_window)
@@ -436,7 +476,14 @@ class ChatbotApp:
         start_time = time.time()
         bot_response = self.chatbot_backend.initialize(context)
         end_time = time.time()
-        print("API wait time: ", end_time-start_time)
+        self.api_call_count = 1
+        self.average_api_wait_time = 0
+        api_call_time_thread = threading.Thread(
+            target=self.display_average_api_wait_time, args=(end_time - start_time,)
+        )
+        api_call_time_thread.start()
+
+        print("API wait time: ", end_time - start_time)
         self.chat_history.configure(state="normal")
         self.chat_history.delete("1.0", "end")
         self.chat_history.configure(state="disabled")
