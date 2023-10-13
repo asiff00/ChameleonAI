@@ -1,4 +1,5 @@
 import threading
+import sys
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
@@ -6,6 +7,7 @@ from brain import ChatbotBackend
 from save_load import Database
 from ttkthemes import ThemedStyle
 import time
+from PIL import ImageTk
 import webbrowser
 
 
@@ -40,15 +42,21 @@ class PlaceholderEntry(ttk.Entry):
 
 # Define the main Chatbot application class
 class ChatbotApp:
-    def __init__(self, data):
+    def __init__(self, data, icon):
         """
         Initializes the ChatbotApp.
 
         Args:
             data (dict): Configuration data for the chatbot.
         """
+
+        if getattr(sys, "frozen", False):
+            import pyi_splash
+
+            pyi_splash.close()
         self.name = "ChameleonAI"
         self.data = data
+        self.icon = icon
         self.db = Database(self.data)
         self.api_key = self.db.get_api()
         self.priming = self.db.get_priming()
@@ -57,7 +65,7 @@ class ChatbotApp:
         self.is_configure_menu_open = False
         self.api_menu_list = []
         self.configure_menu_list = []
-        self.is_timeout = True
+        self.is_timeout = False
         self.average_api_wait_time = 0
         self.api_call_count = 0
         self.root = tk.Tk()
@@ -67,8 +75,13 @@ class ChatbotApp:
         self.window_width = 500
         self.create_ui()
         self.setup_styles()
+        self.root.after_idle(self.create_taskbar_icon)
         self.root.protocol("WM_DELETE_WINDOW", self.on_root_window_closing)
         self.reset_chat()
+
+    def create_taskbar_icon(self):
+        icon = ImageTk.PhotoImage(self.icon)
+        self.root.iconphoto(True, icon)
 
     def create_ui(self):
         # Create the application window, menus, chat frame, and input frame
@@ -98,7 +111,11 @@ class ChatbotApp:
         self.menu_bar.add_command(label="Personality", command=self.open_configure_menu)
         self.api_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_command(label="API", command=self.open_api_menu)
-
+        self.about_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.menu_bar.add_command(label='About', command=self.open_github)
+        self.about_menu.config(fg = 'blue', cursor='hand2')
+    def open_github(self):
+        webbrowser.open("https://github.com/himisir")
     def open_link(self, event):
         webbrowser.open("https://makersuite.google.com/app/apikey")
 
@@ -233,18 +250,26 @@ class ChatbotApp:
         """
         Generate a bot response to a user message.
         """
-        self.is_timeout = True
         start_time = time.time()
-        bot_response = self.chatbot_backend.generate_text(user_message)
-        end_time = time.time()
-        self.api_call_count += 1
-        api_call_time_thread = threading.Thread(
-            target=self.display_average_api_wait_time, args=(end_time - start_time,)
+        self.is_timeout = True
+        wait_timer_thread = threading.Thread(
+            target=self.wait_timer,
+            args=[
+                start_time,
+                1,
+            ],
         )
-        api_call_time_thread.start()
-        print("API wait time: ", end_time - start_time)
-        self.display_message(f"Bot: {bot_response}", is_user=False)
+        wait_timer_thread.start()
+        bot_response = self.chatbot_backend.generate_text(user_message)
         self.is_timeout = False
+        # end_time = time.time()
+        # self.api_call_count += 1
+        # api_call_time_thread = threading.Thread(
+        #     target=self.display_average_api_wait_time, args=(end_time - start_time,)
+        # )
+        # api_call_time_thread.start()
+        # print("API wait time: ", end_time - start_time)
+        self.display_message(f"Bot: {bot_response}", is_user=False)
 
     def remove_highlight(self):
         """
@@ -453,6 +478,8 @@ class ChatbotApp:
         """
         Reset the chat and initialize the chatbot.
         """
+        if self.is_timeout:
+            return None
         self.chatbot_backend = ChatbotBackend(self.api_key)
         bot_initialize_thread = threading.Thread(target=self.bot_initialize)
         bot_initialize_thread.start()
@@ -461,6 +488,7 @@ class ChatbotApp:
         """
         Initialize the chatbot with priming and decorator text.
         """
+
         if len(self.api_key) < 10:
             self.open_api_menu()
             return None
@@ -474,21 +502,45 @@ class ChatbotApp:
 
         context = self.priming + self.decorator
         start_time = time.time()
-        bot_response = self.chatbot_backend.initialize(context)
-        end_time = time.time()
-        self.api_call_count = 1
-        self.average_api_wait_time = 0
-        api_call_time_thread = threading.Thread(
-            target=self.display_average_api_wait_time, args=(end_time - start_time,)
+        self.is_timeout = True
+        wait_timer_thread = threading.Thread(
+            target=self.wait_timer,
+            args=[
+                start_time,
+                0,
+            ],
         )
-        api_call_time_thread.start()
+        wait_timer_thread.start()
+        bot_response = self.chatbot_backend.initialize(context)
+        self.is_timeout = False
+        end_time = time.time()
+
+        # self.api_call_count = 1
+        # self.average_api_wait_time = 0
+        # api_call_time_thread = threading.Thread(
+        #     target=self.display_average_api_wait_time, args=(end_time - start_time,)
+        # )
+        # api_call_time_thread.start()
 
         print("API wait time: ", end_time - start_time)
         self.chat_history.configure(state="normal")
         self.chat_history.delete("1.0", "end")
         self.chat_history.configure(state="disabled")
         self.display_message(f"Bot: {bot_response}", is_user=False)
-        self.is_timeout = False
+
+    def wait_timer(self, start_time, val):
+        if val == 0:
+            text = "Reset"
+            button = self.chat_reset_button
+        else:
+            text = "Send"
+            button = self.send_button
+
+        while self.is_timeout:
+            wait_time = round((time.time() - start_time), 2)
+            button.config(text=str(wait_time))
+            time.sleep(0.1)
+        button.config(text=text)
 
     def run(self):
         """
