@@ -321,7 +321,7 @@ class ChatbotApp:
 
         priming_label = ttk.Label(configure_window, text="Character")
         priming_label.grid(row=0, column=0, padx=10, sticky="w")
-        priming = "I am ChameleonAI"
+        priming = "I am ChameleonAI."
         if len(self.priming) < 2:
             self.priming = priming
         priming_entry = PlaceholderEntry(configure_window, self.priming)
@@ -330,7 +330,7 @@ class ChatbotApp:
         decorator_label = ttk.Label(configure_window, text="Personality")
         decorator_label.grid(row=2, column=0, padx=10, sticky="w")
 
-        decorator = "I'm everything you've ever wanted!"
+        decorator = "I can be anything, anyone, anywhere!"
         if len(self.decorator) < 2:
             self.decorator = decorator
         decorator_entry = PlaceholderEntry(configure_window, self.decorator)
@@ -500,7 +500,7 @@ class ChatbotApp:
             handle_widget_thread.start()
             return None
 
-        context = self.priming + self.decorator
+        context = self.priming + '. ' + self.decorator
         start_time = time.time()
         self.is_timeout = True
         wait_timer_thread = threading.Thread(
