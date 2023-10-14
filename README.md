@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  Welcome to <b>ChameleonAI</b>, your very own, customizable roleplaying AI chatbot. Powered by Google's state-of-the-art PALM Generative AI Model, you get to talk to anything, anyone, anywhere!
+Introducing <b>ChameleonAI</b>, your very own, customizable roleplaying AI chatbot. Powered by Google's state-of-the-art PALM Generative AI Model, you get to talk to anything, anyone, anywhere!
 </p>
 
 <p align="center">
