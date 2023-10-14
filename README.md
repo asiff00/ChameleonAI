@@ -8,6 +8,11 @@
   Welcome to <b>ChameleonAI</b>, your very own, customizable roleplaying AI chatbot. Powered by Google's state-of-the-art PALM Generative AI Model, you get to talk to anything, anyone, anywhere!
 </p>
 
+<p align="center">
+  <img src="img/ChameleonAI.gif" alt="Introduction GIF" width="500">
+</p>
+
+
 <h2>Features</h2>
 <ul>
   <li><b>Set up the API:</b> Simply set up the API and you're good to go. Check out the setup guide below for more details.</li>
@@ -29,13 +34,6 @@
   </li>
 </ol>
 
-<h2>Introduction Video</h2>
-<p align="center">
-  Check out this introduction video for a quick overview of ChameleonAI.
-  <video width="320" height="240" controls>
-    <source src="img/ChameleonAI.mp4" type="video/mp4">
-  </video>
-</p>
 
 <h2>File Directory</h2>
 
