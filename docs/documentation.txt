@@ -10,9 +10,11 @@ Assistant/
 │   │   ├── database.json
 │   ├── test/
 │   │   └── test.py
-├── img/
-│   ├── icon.ico
-│   └── iconSplash.png
+├── img
+│   ├── cover.png
+│   ├── api.png
+│   ├── character.png
+│   └── ChameleonAI.mp4
 ├── docs/
 │   ├── documentation.txt
 ├── .gitignore
