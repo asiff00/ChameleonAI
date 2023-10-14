@@ -13,14 +13,14 @@
 </p>
 
 
-<h2>Features</h2>
+<h2 align="center">Features</h2>
 <ul>
   <li><b>Set up the API:</b> Simply set up the API and you're good to go. Check out the setup guide below for more details.</li>
   <li><b>Customizable Personality:</b> Give your chatbot a personality of its own! You can customize it to your liking.</li>
   <li><b>Easy Access:</b> ChameleonAI is a floating window that always stays on top of other applications, so you can easily access it whenever you need it.</li>
 </ul>
 
-<h2>Setup Guide</h2>
+<h2 align="center">Setup Guide</h2>
 <ol>
   <li><b>API Setup:</b> Follow the instructions in the image below to set up the API.
     <p align="center">
@@ -34,8 +34,11 @@
   </li>
 </ol>
 
+<h2 align="center">Latest Release</h2>
 
-<h2>File Directory</h2>
+For the latest release of ChameleonAI, [click here](https://github.com/himisir/ChameleonAI/releases/latest)
+
+<h2 align="center">File Directory</h2>
 
 <pre>
 ChameleonAI/
