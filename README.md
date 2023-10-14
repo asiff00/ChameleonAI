@@ -40,6 +40,28 @@
 <h2>File Directory</h2>
 
 <pre>
+ChameleonAI/
+├── src/
+│   ├── main/
+│   │   ├── main.py
+│   │   ├── brain.py
+│   │   ├── save_load.py
+│   │   └── ui.py
+│   ├── data/
+│   │   ├── database.json
+│   ├── test/
+│   │   └── test.py
+├── img
+│   ├── cover.png
+│   ├── api.png
+│   ├── character.png
+│   └── ChameleonAI.mp4
+├── docs/
+│   ├── documentation.txt
+├── .gitignore
+├── LICENSE
+├── README.md
+└── requirements.txt
 
 </pre>
 
